@@ -65,12 +65,17 @@ public class SimpleJobConfiguration {
 
 	@Bean
 	public Step step3() {
-		return stepBuilderFactory.get("step3").tasklet(new Tasklet() {
+		return stepBuilderFactory.get("step3").tasklet(step3Tasklet()).build();
+	}
+
+	@Bean
+	public Tasklet step3Tasklet() {
+		return new Tasklet() {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 				log.info(">>>>> This is Step3");
 				return RepeatStatus.FINISHED;
 			}
-		}).build();
+		};
 	}
 }
