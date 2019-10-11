@@ -13,63 +13,62 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.example.demo.tasklet.FtpDownloadTasklet;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
-public class FtpDownloadJob {
+public class FtpDownloadJobConfiguration {
 
 	private final JobBuilderFactory jobBuilderFactory;
 
 	private final StepBuilderFactory stepBuilderFactory;
 
 	@Bean
-	public Job simpleJob() {
-		return jobBuilderFactory.get("simpleJob")
-				.start(step1(null))
-				.next(step2())
-				.next(step3())
+	public Job ftpDownloadJob() {
+		return jobBuilderFactory.get("ftpDownloadJob")
+				.start(readResource(null))
+				.next(processResource())
+				.next(writeLog())
 				.build();
 	}
 
 	@Bean
 	@JobScope
-	public Step step1(@Value("#{jobParameters[requestDate]}") String requestDate) {
-		return stepBuilderFactory.get("step1").tasklet(new Tasklet() {
+	public Step readResource(@Value("#{jobParameters[requestDate]}") String requestDate) {
+		return stepBuilderFactory.get("readResource").tasklet(readResourceTasklet(requestDate)).build();
+	}
+
+	@Bean
+	public Step processResource() {
+		return stepBuilderFactory.get("processResource").tasklet(processResourceTasklet()).build();
+	}
+
+	@Bean
+	public Step writeLog() {
+		return stepBuilderFactory.get("writeLog").tasklet(writeLogTasklet()).build();
+	}
+
+	private Tasklet readResourceTasklet(String requestDate) {
+		return new Tasklet() {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 				log.info(">>>>> This is Step1");
 				log.info(">>>>> RequestDate = {}", requestDate);
 				return RepeatStatus.FINISHED;
 			}
-		}).build();
-
-//		return stepBuilderFactory.get("simpleStep").tasklet((contribution, chunkContext) -> {
-//		    log.info(">>>>> This is Step1");
-//		    return RepeatStatus.FINISHED;
-//		}).build();
+		};
 	}
 
 	@Bean
-	public Step step2() {
-		return stepBuilderFactory.get("step2").tasklet(new Tasklet() {
-			@Override
-			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-				log.info(">>>>> This is Step2");
-				return RepeatStatus.FINISHED;
-			}
-		}).build();
+	public Tasklet processResourceTasklet() {
+		return new FtpDownloadTasklet();
 	}
 
-	@Bean
-	public Step step3() {
-		return stepBuilderFactory.get("step3").tasklet(step3Tasklet()).build();
-	}
-
-	@Bean
-	public Tasklet step3Tasklet() {
+	private Tasklet writeLogTasklet() {
 		return new Tasklet() {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
