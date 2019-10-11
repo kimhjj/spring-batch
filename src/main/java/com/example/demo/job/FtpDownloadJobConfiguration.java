@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.example.demo.tasklet.FtpDownloadTasklet;
+import com.example.demo.tasklet.WriteLogTasklet;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +39,8 @@ public class FtpDownloadJobConfiguration {
 
 	@Bean
 	@JobScope
-	public Step readResource(@Value("#{jobParameters[requestDate]}") String requestDate) {
-		return stepBuilderFactory.get("readResource").tasklet(readResourceTasklet(requestDate)).build();
+	public Step readResource(@Value("#{jobParameters[version]}") String version) {
+		return stepBuilderFactory.get("readResource").tasklet(readResourceTasklet(version)).build();
 	}
 
 	@Bean
@@ -52,29 +53,24 @@ public class FtpDownloadJobConfiguration {
 		return stepBuilderFactory.get("writeLog").tasklet(writeLogTasklet()).build();
 	}
 
-	private Tasklet readResourceTasklet(String requestDate) {
-		return new Tasklet() {
-			@Override
-			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-				log.info(">>>>> This is Step1");
-				log.info(">>>>> RequestDate = {}", requestDate);
-				return RepeatStatus.FINISHED;
-			}
-		};
-	}
+    private Tasklet readResourceTasklet(String version) {
+        return new Tasklet() {
+            @Override
+            public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+                log.info(">>>>> This is Step1");
+                log.info(">>>>> version = {}", version);
+                return RepeatStatus.FINISHED;
+            }
+        };
+    }
 
 	@Bean
 	public Tasklet processResourceTasklet() {
 		return new FtpDownloadTasklet();
 	}
 
-	private Tasklet writeLogTasklet() {
-		return new Tasklet() {
-			@Override
-			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-				log.info(">>>>> This is Step3");
-				return RepeatStatus.FINISHED;
-			}
-		};
+	@Bean
+	public Tasklet writeLogTasklet() {
+		return new WriteLogTasklet();
 	}
 }
