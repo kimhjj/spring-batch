@@ -8,6 +8,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 public class JobLauncherController {
 
-	private final JobLauncher jobLauncher;
-	private final Job job;
+	@Autowired
+	JobLauncher jobLauncher;
 
-	public JobLauncherController(JobLauncher jobLauncher, @Qualifier("ftpDownloadJob") Job job) {
-		this.jobLauncher = jobLauncher;
-		this.job = job;
-	}
+	@Autowired
+	@Qualifier("ftpDownloadJob")
+	Job ftpDownloadJob;
 
 	/**
 	 * Job 실행
@@ -42,7 +42,7 @@ public class JobLauncherController {
 					.addString("version", version)
 					//.addLong("time", System.currentTimeMillis())
 					.toJobParameters();
-			jobLauncher.run(job, jobParameters);
+			jobLauncher.run(ftpDownloadJob, jobParameters);
 			return new ResponseEntity<>("DONE", HttpStatus.OK);
 
 		} catch (JobInstanceAlreadyCompleteException e) {
